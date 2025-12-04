@@ -607,42 +607,119 @@
       .navbar-content {
         padding: 12px 16px;
       }
-      
+
       .logo-text h1 {
         font-size: 18px;
       }
-      
+
       .logo-text p {
         display: none;
       }
-      
+
+      .nav-actions {
+        gap: 6px;
+      }
+
+      .nav-actions .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+
       .control-panel {
         padding: 16px;
       }
-      
+
+      .control-content {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .filter-group {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
       .content {
         padding: 16px;
       }
-      
+
       .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
       }
-      
+
+      .stat-card {
+        padding: 16px;
+      }
+
+      .stat-label {
+        font-size: 11px;
+      }
+
+      .stat-value {
+        font-size: 18px;
+      }
+
+      .chart-container {
+        padding: 16px;
+      }
+
       .chart-body {
         height: 350px;
       }
-      
+
       .tab-nav {
         padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
-      
+
       .tab-item {
         padding: 12px 16px;
-        font-size: 14px;
+        font-size: 13px;
+        white-space: nowrap;
       }
-      
+
       .comparison-grid {
         grid-template-columns: 1fr;
+      }
+
+      .modal-content {
+        max-width: 90%;
+        padding: 20px;
+      }
+
+      .modal-title {
+        font-size: 18px;
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo-text h1 {
+        font-size: 16px;
+      }
+
+      .nav-actions .btn {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-body {
+        height: 300px;
+      }
+
+      .filter-btn {
+        padding: 8px 12px;
+        font-size: 12px;
       }
     }
 
@@ -893,8 +970,9 @@
           </div>
         </div>
         <div class="nav-actions">
+          <button class="btn" onclick="toggleParticles()" id="particleToggle">✨ 动画开</button>
+          <button class="btn" onclick="openExportMenu()">📥 导出数据</button>
           <button class="btn" onclick="openDataInfo()">📋 数据说明</button>
-          <button class="btn" onclick="window.location.reload()">🔄 刷新数据</button>
         </div>
       </div>
     </nav>
@@ -1080,16 +1158,22 @@
       <div class="tab-content" id="comparison">
         <div class="chart-container">
           <div class="chart-header">
-            <div class="chart-title">选择城市进行对比</div>
+            <div class="chart-title">多城市对比分析</div>
           </div>
           <div style="margin-bottom: 20px;">
-            <select id="compareCity1" class="btn" style="margin-right: 10px;">
-              <option>选择城市1</option>
-            </select>
-            <select id="compareCity2" class="btn">
-              <option>选择城市2</option>
-            </select>
-            <button class="btn btn-primary" onclick="updateComparison()" style="margin-left: 10px;">开始对比</button>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;" id="citySelectContainer">
+              <select class="btn compare-city-select" data-index="0">
+                <option value="">选择城市1</option>
+              </select>
+              <select class="btn compare-city-select" data-index="1">
+                <option value="">选择城市2</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn" onclick="addCityToCompare()" id="addCityBtn">➕ 添加城市</button>
+              <button class="btn btn-primary" onclick="updateMultiComparison()">🔍 开始对比</button>
+              <button class="btn" onclick="resetComparison()">🔄 重置</button>
+            </div>
           </div>
           <div class="comparison-grid" id="comparisonGrid"></div>
         </div>
@@ -1184,6 +1268,46 @@
           <h3>📮 联系反馈</h3>
           <p>如发现数据错误或有改进建议，欢迎通过以下方式联系：</p>
           <p>邮箱：zhixiangweilaiai@gmail.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出菜单弹窗 -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">📥 导出数据</div>
+        <button class="modal-close" onclick="closeExportMenu()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3>📊 导出当前筛选数据</h3>
+          <p style="margin-bottom: 16px;">导出当前筛选条件下的 <strong id="exportDataCount" style="color: var(--primary);">0</strong> 条城市数据</p>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn btn-primary" onclick="exportToCSV()" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+              <span>📄</span> 导出为 CSV 文件
+            </button>
+            <button class="btn" onclick="exportToJSON()" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+              <span>📋</span> 导出为 JSON 文件
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h3>📸 导出图表</h3>
+          <p style="margin-bottom: 16px;">将当前可见的图表导出为图片</p>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn" onclick="exportCurrentChart()" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+              <span>🖼️</span> 导出当前Tab的图表
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">
+            💡 提示：CSV文件可用Excel打开，JSON文件可用于数据分析和开发。图表导出支持PNG格式。
+          </p>
         </div>
       </div>
     </div>
@@ -1644,6 +1768,7 @@
     const ctx = canvas.getContext('2d');
     let particles = [];
     let animationId;
+    let particlesEnabled = !(/Mobi|Android/i.test(navigator.userAgent)); // 默认移动端关闭
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -1686,8 +1811,10 @@
     }
 
     function animateParticles() {
+      if (!particlesEnabled) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       particles.forEach(particle => {
         particle.update();
         particle.draw();
@@ -1716,7 +1843,11 @@
 
     resizeCanvas();
     initParticles();
-    animateParticles();
+    if (particlesEnabled) {
+      animateParticles();
+    } else {
+      canvas.style.display = 'none';
+    }
 
     window.addEventListener('resize', throttle(() => {
       resizeCanvas();
@@ -2763,152 +2894,202 @@
       charts.comparison.setOption(option, true);
     }
 
-    // ========== 填充城市选择器 ==========
+    // ========== 填充城市选择器（多城市）==========
     function populateCitySelects() {
-      const select1 = document.getElementById('compareCity1');
-      const select2 = document.getElementById('compareCity2');
+      const selects = document.querySelectorAll('.compare-city-select');
 
-      cityData.slice(0, 50).forEach(city => {
-        const option1 = document.createElement('option');
-        option1.value = city.name;
-        option1.textContent = `${city.name} (¥${(city.salary / 10000).toFixed(1)}万)`;
-        select1.appendChild(option1);
+      selects.forEach(select => {
+        // 清空并添加默认选项
+        select.innerHTML = '<option value="">请选择城市</option>';
 
-        const option2 = option1.cloneNode(true);
-        select2.appendChild(option2);
+        // 添加TOP100城市
+        cityData.slice(0, 100).forEach(city => {
+          const option = document.createElement('option');
+          option.value = city.name;
+          option.textContent = `${city.name} (¥${(city.salary / 10000).toFixed(1)}万)`;
+          select.appendChild(option);
+        });
       });
     }
 
-    // ========== 更新对比 ==========
-    window.updateComparison = function() {
-      const city1Name = document.getElementById('compareCity1').value;
-      const city2Name = document.getElementById('compareCity2').value;
+    // ========== 添加城市到对比列表 ==========
+    window.addCityToCompare = function() {
+      const container = document.getElementById('citySelectContainer');
+      const currentCount = container.querySelectorAll('.compare-city-select').length;
 
-      if (city1Name === '选择城市1' || city2Name === '选择城市2') {
-        alert('请选择两个城市进行对比');
+      if (currentCount >= 5) {
+        alert('❌ 最多只能同时对比5个城市');
         return;
       }
 
-      const city1 = cityData.find(c => c.name === city1Name);
-      const city2 = cityData.find(c => c.name === city2Name);
+      const select = document.createElement('select');
+      select.className = 'btn compare-city-select';
+      select.setAttribute('data-index', currentCount);
+      select.innerHTML = '<option value="">请选择城市</option>';
 
-      if (!city1 || !city2) return;
+      // 添加城市选项
+      cityData.slice(0, 100).forEach(city => {
+        const option = document.createElement('option');
+        option.value = city.name;
+        option.textContent = `${city.name} (¥${(city.salary / 10000).toFixed(1)}万)`;
+        select.appendChild(option);
+      });
+
+      // 添加删除按钮
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.gap = '4px';
+      wrapper.style.alignItems = 'center';
+      wrapper.appendChild(select);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn';
+      removeBtn.textContent = '×';
+      removeBtn.style.padding = '10px 12px';
+      removeBtn.onclick = function() {
+        wrapper.remove();
+        checkAddButtonState();
+      };
+      wrapper.appendChild(removeBtn);
+
+      container.appendChild(wrapper);
+      checkAddButtonState();
+    };
+
+    // ========== 检查添加按钮状态 ==========
+    function checkAddButtonState() {
+      const currentCount = document.querySelectorAll('.compare-city-select').length;
+      const addBtn = document.getElementById('addCityBtn');
+      if (currentCount >= 5) {
+        addBtn.disabled = true;
+        addBtn.style.opacity = '0.5';
+        addBtn.style.cursor = 'not-allowed';
+      } else {
+        addBtn.disabled = false;
+        addBtn.style.opacity = '1';
+        addBtn.style.cursor = 'pointer';
+      }
+    }
+
+    // ========== 重置对比 ==========
+    window.resetComparison = function() {
+      const container = document.getElementById('citySelectContainer');
+      container.innerHTML = `
+        <select class="btn compare-city-select" data-index="0">
+          <option value="">选择城市1</option>
+        </select>
+        <select class="btn compare-city-select" data-index="1">
+          <option value="">选择城市2</option>
+        </select>
+      `;
+      populateCitySelects();
+      checkAddButtonState();
+      document.getElementById('comparisonGrid').innerHTML = '';
+      initComparisonChart();
+    };
+
+    // ========== 多城市对比更新 ==========
+    window.updateMultiComparison = function() {
+      const selects = document.querySelectorAll('.compare-city-select');
+      const selectedCities = [];
+
+      selects.forEach(select => {
+        const cityName = select.value;
+        if (cityName) {
+          const city = cityData.find(c => c.name === cityName);
+          if (city) selectedCities.push(city);
+        }
+      });
+
+      if (selectedCities.length < 2) {
+        alert('❌ 请至少选择2个城市进行对比');
+        return;
+      }
 
       const avgSalary = cityData.reduce((sum, c) => sum + c.salary, 0) / cityData.length;
 
-      // 更新对比卡片
+      // 生成对比卡片
       const grid = document.getElementById('comparisonGrid');
-      grid.innerHTML = `
-        <div class="comparison-card">
-          <div class="comparison-header">
-            <div class="comparison-city">${city1.name}</div>
-            <div class="comparison-rank">第${city1.rank}名</div>
-          </div>
-          <div class="comparison-stats">
-            <div class="comparison-row">
-              <span class="comparison-label">年平均工资</span>
-              <span class="comparison-value">¥${city1.salary.toLocaleString()}</span>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">城市等级</span>
-              <span class="comparison-value">${city1.tier}</span>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">所属省份</span>
-              <span class="comparison-value">${city1.province}</span>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">高于全国平均</span>
-              <span class="comparison-value">${((city1.salary / avgSalary - 1) * 100).toFixed(1)}%</span>
-            </div>
-          </div>
-        </div>
-        <div class="comparison-card">
-          <div class="comparison-header">
-            <div class="comparison-city">${city2.name}</div>
-            <div class="comparison-rank">第${city2.rank}名</div>
-          </div>
-          <div class="comparison-stats">
-            <div class="comparison-row">
-              <span class="comparison-label">年平均工资</span>
-              <span class="comparison-value">¥${city2.salary.toLocaleString()}</span>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">城市等级</span>
-              <span class="comparison-value">${city2.tier}</span>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">所属省份</span>
-              <span class="comparison-value">${city2.province}</span>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">高于全国平均</span>
-              <span class="comparison-value">${((city2.salary / avgSalary - 1) * 100).toFixed(1)}%</span>
-            </div>
-          </div>
-        </div>
-      `;
+      const colors = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
-      // 更新对比柱状图
-      const avgRankForComparison = Math.max(city1.rank, city2.rank) + 50; // 设置合理的最大排名用于归一化
+      grid.innerHTML = selectedCities.map((city, index) => `
+        <div class="comparison-card" style="border-top: 3px solid ${colors[index % colors.length]};">
+          <div class="comparison-header">
+            <div class="comparison-city">${city.name}</div>
+            <div class="comparison-rank">第${city.rank}名</div>
+          </div>
+          <div class="comparison-stats">
+            <div class="comparison-row">
+              <span class="comparison-label">年平均工资</span>
+              <span class="comparison-value">¥${city.salary.toLocaleString()}</span>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">城市等级</span>
+              <span class="comparison-value">${city.tier}</span>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">所属省份</span>
+              <span class="comparison-value">${city.province}</span>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">高于全国平均</span>
+              <span class="comparison-value">${((city.salary / avgSalary - 1) * 100).toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // 更新多城市对比图表
+      const maxRank = Math.max(...selectedCities.map(c => c.rank)) + 50;
+      const legendData = selectedCities.map(c => c.name);
+
+      const series = selectedCities.map((city, index) => ({
+        name: city.name,
+        data: [
+          {
+            value: city.salary,
+            label: {
+              formatter: '¥' + (city.salary / 10000).toFixed(1) + '万'
+            }
+          },
+          {
+            value: maxRank - city.rank,
+            label: {
+              formatter: '第' + city.rank + '名'
+            }
+          },
+          {
+            value: parseFloat(((city.salary / avgSalary - 1) * 100).toFixed(1)),
+            label: {
+              formatter: (params) => {
+                const val = params.value;
+                return (val >= 0 ? '+' : '') + val.toFixed(1) + '%';
+              }
+            }
+          }
+        ],
+        type: 'bar',
+        itemStyle: {
+          color: colors[index % colors.length],
+          borderRadius: [4, 4, 0, 0]
+        },
+        label: {
+          show: true,
+          position: 'top',
+          color: colors[index % colors.length]
+        }
+      }));
+
       charts.comparison.setOption({
         legend: {
-          data: [city1.name, city2.name]
+          data: legendData
         },
         yAxis: {
           max: function(value) {
-            // 动态设置Y轴最大值
             return Math.ceil(value.max * 1.2);
           }
         },
-        series: [
-          {
-            name: city1.name,
-            data: [
-              {
-                value: city1.salary,
-                label: {
-                  formatter: '¥' + (city1.salary / 10000).toFixed(1) + '万'
-                }
-              },
-              {
-                value: avgRankForComparison - city1.rank, // 排名越小越好，所以反转
-                label: {
-                  formatter: '第' + city1.rank + '名'
-                }
-              },
-              {
-                value: ((city1.salary / avgSalary - 1) * 100).toFixed(1),
-                label: {
-                  formatter: '+' + ((city1.salary / avgSalary - 1) * 100).toFixed(1) + '%'
-                }
-              }
-            ]
-          },
-          {
-            name: city2.name,
-            data: [
-              {
-                value: city2.salary,
-                label: {
-                  formatter: '¥' + (city2.salary / 10000).toFixed(1) + '万'
-                }
-              },
-              {
-                value: avgRankForComparison - city2.rank,
-                label: {
-                  formatter: '第' + city2.rank + '名'
-                }
-              },
-              {
-                value: ((city2.salary / avgSalary - 1) * 100).toFixed(1),
-                label: {
-                  formatter: '+' + ((city2.salary / avgSalary - 1) * 100).toFixed(1) + '%'
-                }
-              }
-            ]
-          }
-        ]
+        series: series
       });
     };
 
@@ -3129,6 +3310,194 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       closeDataInfo();
+      closeExportMenu();
+    }
+  });
+
+  // ========== 导出菜单控制 ==========
+  function openExportMenu() {
+    // 获取当前筛选的数据数量
+    const filteredData = state.filteredData || cityData;
+    document.getElementById('exportDataCount').textContent = filteredData.length;
+    document.getElementById('exportModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeExportMenu() {
+    document.getElementById('exportModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+  }
+
+  // 点击弹窗外部关闭
+  document.getElementById('exportModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeExportMenu();
+    }
+  });
+
+  // ========== 导出为CSV ==========
+  function exportToCSV() {
+    const data = state.filteredData || cityData;
+
+    // CSV表头
+    const headers = ['排名', '城市', '省份', '城市等级', '年平均工资(元)'];
+
+    // CSV内容
+    const rows = data.map(city => [
+      city.rank,
+      city.name,
+      city.province,
+      city.tier,
+      city.salary
+    ]);
+
+    // 组合CSV
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // 添加BOM以支持中文
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // 下载
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `城市工资数据_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    closeExportMenu();
+    alert(`✅ 成功导出 ${data.length} 条数据到CSV文件！`);
+  }
+
+  // ========== 导出为JSON ==========
+  function exportToJSON() {
+    const data = state.filteredData || cityData;
+
+    const jsonContent = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `城市工资数据_${new Date().toISOString().split('T')[0]}.json`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    closeExportMenu();
+    alert(`✅ 成功导出 ${data.length} 条数据到JSON文件！`);
+  }
+
+  // ========== 导出当前图表 ==========
+  function exportCurrentChart() {
+    // 获取当前激活的Tab
+    const activeTab = document.querySelector('.tab-item.active');
+    if (!activeTab) {
+      alert('❌ 未找到激活的Tab');
+      return;
+    }
+
+    const tabName = activeTab.getAttribute('data-tab');
+    let chartInstance = null;
+    let chartName = '';
+
+    // 根据Tab确定要导出的图表
+    switch(tabName) {
+      case 'overview':
+        chartInstance = charts.overview;
+        chartName = '数据总览';
+        break;
+      case 'map':
+        chartInstance = charts.map;
+        chartName = '省份工资排行';
+        break;
+      case 'ranking':
+        chartInstance = charts.ranking;
+        chartName = '城市排行榜';
+        break;
+      case 'comparison':
+        chartInstance = charts.comparison;
+        chartName = '城市对比';
+        break;
+      case 'analysis':
+        chartInstance = charts.distribution;
+        chartName = '工资分布分析';
+        break;
+      default:
+        alert('❌ 该Tab不支持图表导出');
+        return;
+    }
+
+    if (!chartInstance) {
+      alert('❌ 图表未初始化');
+      return;
+    }
+
+    try {
+      // 使用ECharts自带的导出功能
+      const url = chartInstance.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#020617'
+      });
+
+      // 下载图片
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
+      link.click();
+
+      closeExportMenu();
+      alert(`✅ 成功导出图表：${chartName}`);
+    } catch (error) {
+      alert('❌ 导出失败：' + error.message);
+    }
+  }
+
+  // ========== 切换粒子动画 ==========
+  function toggleParticles() {
+    particlesEnabled = !particlesEnabled;
+    const btn = document.getElementById('particleToggle');
+    const canvas = document.getElementById('particleCanvas');
+
+    if (particlesEnabled) {
+      btn.textContent = '✨ 动画开';
+      btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
+      btn.style.color = '#fff';
+      canvas.style.display = 'block';
+      if (!animationId) {
+        animateParticles();
+      }
+    } else {
+      btn.textContent = '🌑 动画关';
+      btn.style.background = 'rgba(30, 41, 59, 0.8)';
+      btn.style.color = 'var(--text-secondary)';
+      canvas.style.display = 'none';
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  // 初始化按钮状态
+  window.addEventListener('load', () => {
+    const btn = document.getElementById('particleToggle');
+    if (!particlesEnabled) {
+      btn.textContent = '🌑 动画关';
+      btn.style.background = 'rgba(30, 41, 59, 0.8)';
+      btn.style.color = 'var(--text-secondary)';
+    } else {
+      btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
+      btn.style.color = '#fff';
     }
   });
   </script>
