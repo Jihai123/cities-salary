@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
   <title>中国各城市人均可支配收入</title>
   <style>
-    /* ========== CSS变量 ========== */
+    /* ========== CSS变量 - 暗色主题（默认）========== */
     :root {
       --bg-dark: #020617;
       --bg-mid: #0f172a;
@@ -21,6 +21,33 @@
       --border: rgba(6, 182, 212, 0.2);
       --glow: rgba(6, 182, 212, 0.3);
       --card-bg: rgba(15, 23, 42, 0.8);
+    }
+
+    /* ========== 亮色主题 ========== */
+    [data-theme="light"] {
+      --bg-dark: #f8fafc;
+      --bg-mid: #f1f5f9;
+      --bg-light: #e2e8f0;
+      --primary: #0891b2;
+      --secondary: #2563eb;
+      --accent: #7c3aed;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --border: rgba(8, 145, 178, 0.2);
+      --glow: rgba(8, 145, 178, 0.2);
+      --card-bg: rgba(255, 255, 255, 0.9);
+    }
+
+    /* ========== 主题切换过渡动画 ========== */
+    body {
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .card, .modal-content, .navbar, .control-panel, .tab-nav, .chart-card {
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     /* ========== 全局样式 ========== */
@@ -491,6 +518,34 @@
       margin-top: 2px;
     }
 
+    .favorite-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      background: var(--bg-mid);
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .favorite-btn:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: scale(1.1);
+    }
+
+    .favorite-btn.active {
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      border-color: #f59e0b;
+      color: #fff;
+    }
+
     /* ========== 对比表格 ========== */
     .comparison-grid {
       display: grid;
@@ -704,10 +759,23 @@
         font-size: 16px;
       }
 
-      .nav-actions .btn {
-        padding: 6px 8px;
-        font-size: 11px;
+      .nav-actions {
+        gap: 4px;
       }
+
+      .nav-actions .btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        min-width: auto;
+      }
+
+      /* 移动端简化按钮文字为图标 */
+      .nav-actions .btn[title="切换主题"] { min-width: 36px; }
+      .nav-actions .btn[title="切换动画"] { min-width: 36px; }
+      .nav-actions .btn[title="收藏的城市"] { min-width: 36px; }
+      .nav-actions .btn[title="分享"] { min-width: 36px; }
+      .nav-actions .btn[title="导出数据"] { min-width: 36px; }
+      .nav-actions .btn[title="数据说明"] { min-width: 36px; }
 
       .stats-grid {
         grid-template-columns: 1fr;
@@ -720,6 +788,60 @@
       .filter-btn {
         padding: 8px 12px;
         font-size: 12px;
+      }
+
+      .ranking-item {
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .rank-badge {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+
+      .rank-city {
+        font-size: 14px;
+      }
+
+      .salary-value {
+        font-size: 16px;
+      }
+
+      .favorite-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+      }
+    }
+
+    /* ========== 移动端触摸优化 ========== */
+    @media (hover: none) and (pointer: coarse) {
+      .btn, .filter-btn, .tab-item, .ranking-item, .favorite-btn {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+
+      .ranking-item:active {
+        transform: scale(0.98);
+      }
+
+      .btn:active, .filter-btn:active {
+        transform: scale(0.95);
+      }
+
+      .favorite-btn:active {
+        transform: scale(1.15);
+      }
+
+      /* 增加触摸目标大小 */
+      .tab-item {
+        min-height: 44px;
+      }
+
+      .filter-btn {
+        min-height: 44px;
       }
     }
 
@@ -970,9 +1092,12 @@
           </div>
         </div>
         <div class="nav-actions">
-          <button class="btn" onclick="toggleParticles()" id="particleToggle">✨ 动画开</button>
-          <button class="btn" onclick="openExportMenu()">📥 导出数据</button>
-          <button class="btn" onclick="openDataInfo()">📋 数据说明</button>
+          <button class="btn" onclick="toggleTheme()" id="themeToggle" title="切换主题">🌙 暗色</button>
+          <button class="btn" onclick="toggleParticles()" id="particleToggle" title="切换动画">✨ 动画开</button>
+          <button class="btn" onclick="openFavorites()" id="favoritesBtn" title="收藏的城市">⭐ 收藏</button>
+          <button class="btn" onclick="openShareMenu()" title="分享">📤 分享</button>
+          <button class="btn" onclick="openExportMenu()" title="导出数据">📥 导出</button>
+          <button class="btn" onclick="openDataInfo()" title="数据说明">📋 说明</button>
         </div>
       </div>
     </nav>
@@ -1308,6 +1433,70 @@
           <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">
             💡 提示：CSV文件可用Excel打开，JSON文件可用于数据分析和开发。图表导出支持PNG格式。
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收藏弹窗 -->
+  <div class="modal-overlay" id="favoritesModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <div class="modal-title">⭐ 我的收藏</div>
+        <button class="modal-close" onclick="closeFavorites()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <p style="margin-bottom: 16px; color: var(--text-secondary);">
+            <span id="favoritesCount">0</span> 个收藏的城市
+          </p>
+          <div id="favoritesList" style="max-height: 400px; overflow-y: auto;">
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+              <div style="font-size: 48px; margin-bottom: 16px;">⭐</div>
+              <p>还没有收藏任何城市</p>
+              <p style="font-size: 13px; margin-top: 8px;">在排行榜或对比页面点击收藏按钮添加</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-section" id="favoritesActions" style="display: none;">
+          <button class="btn btn-primary" onclick="compareAllFavorites()" style="width: 100%; justify-content: center;">
+            <span>⚖️</span> 对比所有收藏城市
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分享弹窗 -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">📤 分享</div>
+        <button class="modal-close" onclick="closeShareMenu()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3>🔗 分享链接</h3>
+          <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-secondary);">
+            该链接包含您当前的筛选条件和查看状态
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="shareURL" readonly style="flex: 1; padding: 10px; background: var(--bg-mid); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 13px;">
+            <button class="btn btn-primary" onclick="copyShareURL()">📋 复制</button>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h3>📱 二维码分享</h3>
+          <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-secondary);">
+            扫描二维码在手机上查看
+          </p>
+          <div style="text-align: center; padding: 20px; background: #fff; border-radius: 12px;">
+            <div id="qrcodeContainer"></div>
+          </div>
+          <button class="btn" onclick="downloadQRCode()" style="width: 100%; margin-top: 12px;">
+            <span>💾</span> 下载二维码
+          </button>
         </div>
       </div>
     </div>
@@ -1760,8 +1949,88 @@
       currentProvince: 'all',
       salaryMin: 12000,
       salaryMax: 190000,
-      filteredData: cityData
+      filteredData: cityData,
+      favorites: [], // 收藏的城市名称数组
+      theme: 'dark' // 当前主题：dark 或 light
     };
+
+    // ========== LocalStorage 管理 ==========
+    const StorageManager = {
+      keys: {
+        theme: 'city-salary-theme',
+        favorites: 'city-salary-favorites',
+        filters: 'city-salary-filters'
+      },
+
+      // 保存主题
+      saveTheme(theme) {
+        try {
+          localStorage.setItem(this.keys.theme, theme);
+        } catch (e) {
+          console.warn('LocalStorage保存主题失败:', e);
+        }
+      },
+
+      // 读取主题
+      loadTheme() {
+        try {
+          return localStorage.getItem(this.keys.theme) || null;
+        } catch (e) {
+          console.warn('LocalStorage读取主题失败:', e);
+          return null;
+        }
+      },
+
+      // 保存收藏
+      saveFavorites(favorites) {
+        try {
+          localStorage.setItem(this.keys.favorites, JSON.stringify(favorites));
+        } catch (e) {
+          console.warn('LocalStorage保存收藏失败:', e);
+        }
+      },
+
+      // 读取收藏
+      loadFavorites() {
+        try {
+          const data = localStorage.getItem(this.keys.favorites);
+          return data ? JSON.parse(data) : [];
+        } catch (e) {
+          console.warn('LocalStorage读取收藏失败:', e);
+          return [];
+        }
+      },
+
+      // 保存筛选条件
+      saveFilters(filters) {
+        try {
+          localStorage.setItem(this.keys.filters, JSON.stringify(filters));
+        } catch (e) {
+          console.warn('LocalStorage保存筛选条件失败:', e);
+        }
+      },
+
+      // 读取筛选条件
+      loadFilters() {
+        try {
+          const data = localStorage.getItem(this.keys.filters);
+          return data ? JSON.parse(data) : null;
+        } catch (e) {
+          console.warn('LocalStorage读取筛选条件失败:', e);
+          return null;
+        }
+      }
+    };
+
+    // 初始化：从LocalStorage加载数据
+    state.favorites = StorageManager.loadFavorites();
+    const savedFilters = StorageManager.loadFilters();
+    if (savedFilters) {
+      state.currentFilter = savedFilters.tier || 'all';
+      state.currentProvince = savedFilters.province || 'all';
+      state.salaryMin = savedFilters.salaryMin || 12000;
+      state.salaryMax = savedFilters.salaryMax || 190000;
+    }
 
     // ========== 粒子背景动画（优化版）==========
     const canvas = document.getElementById('particleCanvas');
@@ -1897,6 +2166,47 @@
         bottom: '3%',
         top: '10%',
         containLabel: true
+      },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        borderColor: '#06b6d4',
+        borderWidth: 1,
+        textStyle: {
+          color: '#f1f5f9',
+          fontSize: 13
+        },
+        padding: [10, 15],
+        extraCssText: 'box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); border-radius: 8px;'
+      },
+      toolbox: {
+        feature: {
+          saveAsImage: {
+            show: true,
+            title: '保存图片',
+            backgroundColor: '#020617',
+            pixelRatio: 2
+          },
+          dataZoom: {
+            show: true,
+            title: {
+              zoom: '区域缩放',
+              back: '还原'
+            }
+          },
+          restore: {
+            show: true,
+            title: '还原'
+          }
+        },
+        iconStyle: {
+          borderColor: '#06b6d4'
+        },
+        emphasis: {
+          iconStyle: {
+            borderColor: '#3b82f6'
+          }
+        }
       }
     };
 
@@ -2316,6 +2626,8 @@
       displayData.forEach((city, index) => {
         const item = document.createElement('div');
         item.className = 'ranking-item';
+        const isFav = window.isFavorite(city.name);
+
         item.innerHTML = `
           <div class="rank-badge">${city.rank}</div>
           <div class="rank-info">
@@ -2326,6 +2638,9 @@
             <span class="salary-value">¥${(city.salary / 10000).toFixed(1)}万</span>
             <div class="salary-tier">${city.tier}</div>
           </div>
+          <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${city.name}'); renderRankingList(state.filteredData);" title="${isFav ? '取消收藏' : '添加收藏'}">
+            ${isFav ? '⭐' : '☆'}
+          </button>
         `;
         container.appendChild(item);
       });
@@ -3147,10 +3462,80 @@
       maxSlider.addEventListener('input', updateRangeText);
     }
 
+    // ========== 图表交互增强 ==========
+    function setupChartInteractions() {
+      // 为排行榜图表添加点击事件
+      if (charts.ranking) {
+        charts.ranking.on('click', function(params) {
+          if (params.componentType === 'series' && params.name) {
+            const cityName = params.name;
+            const city = cityData.find(c => c.name === cityName);
+            if (city) {
+              const isFav = window.isFavorite(cityName);
+              const action = isFav ? '取消收藏' : '添加收藏';
+
+              if (confirm(`${cityName}\n工资: ¥${city.salary.toLocaleString()}\n省份: ${city.province}\n等级: ${city.tier}\n\n是否${action}？`)) {
+                window.toggleFavorite(cityName);
+                renderRankingList(state.filteredData);
+              }
+            }
+          }
+        });
+      }
+
+      // 为省份排行图添加点击筛选功能
+      if (charts.map) {
+        charts.map.on('click', function(params) {
+          if (params.componentType === 'series' && params.name) {
+            const provinceName = params.name;
+            const provinceFilter = document.getElementById('provinceFilter');
+            if (provinceFilter) {
+              provinceFilter.value = provinceName;
+              state.currentProvince = provinceName;
+              filterData();
+              // 切换到排行榜Tab显示筛选结果
+              document.querySelector('[data-tab="ranking"]')?.click();
+            }
+          }
+        });
+      }
+
+      // 为分布图添加点击事件
+      if (charts.distribution) {
+        charts.distribution.on('click', function(params) {
+          if (params.componentType === 'series' && params.name) {
+            console.log('点击了工资范围:', params.name);
+            // 可以根据点击的范围自动筛选
+          }
+        });
+      }
+
+      // 为所有图表添加双击重置功能
+      Object.values(charts).forEach(chart => {
+        if (chart && typeof chart.on === 'function') {
+          chart.on('dblclick', function() {
+            chart.dispatchAction({
+              type: 'restore'
+            });
+          });
+        }
+      });
+
+      console.log('✅ 图表交互已增强');
+    }
+
     // ========== 应用高级筛选 ==========
     window.applyAdvancedFilter = function() {
       state.currentProvince = document.getElementById('provinceFilter').value;
       filterData();
+
+      // 保存筛选条件到LocalStorage
+      StorageManager.saveFilters({
+        tier: state.currentFilter,
+        province: state.currentProvince,
+        salaryMin: state.salaryMin,
+        salaryMax: state.salaryMax
+      });
     };
 
     // ========== 重置所有筛选 ==========
@@ -3172,6 +3557,14 @@
       // 重置等级按钮
       document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelector('[data-tier="all"]').classList.add('active');
+
+      // 清空LocalStorage中的筛选条件
+      StorageManager.saveFilters({
+        tier: 'all',
+        province: 'all',
+        salaryMin: 12000,
+        salaryMax: 190000
+      });
 
       // 更新图表
       updateAllCharts(cityData);
@@ -3269,6 +3662,7 @@
       populateCitySelects();
       populateProvinceFilter();
       setupSalaryRangeSliders();
+      setupChartInteractions();
 
       // 隐藏加载界面
       setTimeout(() => {
@@ -3497,6 +3891,277 @@
         btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
         btn.style.color = '#fff';
       }
+    });
+
+    // ========== 主题切换功能 ==========
+    // 初始化主题
+    function initTheme() {
+      // 优先级：LocalStorage > 系统偏好 > 默认暗色
+      const savedTheme = StorageManager.loadTheme();
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      let theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+      state.theme = theme;
+      applyTheme(theme);
+
+      // 监听系统主题变化（仅在用户未手动设置时生效）
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!StorageManager.loadTheme()) { // 仅在未手动设置时跟随系统
+          const newTheme = e.matches ? 'dark' : 'light';
+          state.theme = newTheme;
+          applyTheme(newTheme);
+        }
+      });
+    }
+
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      const btn = document.getElementById('themeToggle');
+
+      if (theme === 'light') {
+        html.setAttribute('data-theme', 'light');
+        btn.textContent = '☀️ 亮色';
+        btn.style.background = 'linear-gradient(135deg, #f59e0b, #f97316)';
+        btn.style.color = '#fff';
+      } else {
+        html.removeAttribute('data-theme');
+        btn.textContent = '🌙 暗色';
+        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
+        btn.style.color = '#fff';
+      }
+    }
+
+    window.toggleTheme = function() {
+      const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+      state.theme = newTheme;
+      applyTheme(newTheme);
+      StorageManager.saveTheme(newTheme);
+    };
+
+    // ========== 收藏功能 ==========
+    window.toggleFavorite = function(cityName) {
+      const index = state.favorites.indexOf(cityName);
+
+      if (index > -1) {
+        // 取消收藏
+        state.favorites.splice(index, 1);
+      } else {
+        // 添加收藏
+        state.favorites.push(cityName);
+      }
+
+      StorageManager.saveFavorites(state.favorites);
+      updateFavoritesUI();
+      return state.favorites.indexOf(cityName) > -1; // 返回当前收藏状态
+    };
+
+    window.isFavorite = function(cityName) {
+      return state.favorites.indexOf(cityName) > -1;
+    };
+
+    window.openFavorites = function() {
+      updateFavoritesUI();
+      document.getElementById('favoritesModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeFavorites = function() {
+      document.getElementById('favoritesModal').classList.remove('active');
+      document.body.style.overflow = 'auto';
+    };
+
+    function updateFavoritesUI() {
+      const count = state.favorites.length;
+      document.getElementById('favoritesCount').textContent = count;
+
+      const listContainer = document.getElementById('favoritesList');
+      const actionsSection = document.getElementById('favoritesActions');
+
+      if (count === 0) {
+        listContainer.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <div style="font-size: 48px; margin-bottom: 16px;">⭐</div>
+            <p>还没有收藏任何城市</p>
+            <p style="font-size: 13px; margin-top: 8px;">在排行榜或对比页面点击收藏按钮添加</p>
+          </div>
+        `;
+        actionsSection.style.display = 'none';
+      } else {
+        const favoriteCities = state.favorites.map(name =>
+          cityData.find(c => c.name === name)
+        ).filter(c => c); // 过滤掉找不到的城市
+
+        listContainer.innerHTML = favoriteCities.map(city => `
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-mid); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;">
+            <div style="flex: 1;">
+              <div style="font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${city.name}</div>
+              <div style="font-size: 13px; color: var(--text-secondary);">
+                ${city.province} · ${city.tier} · ¥${city.salary.toLocaleString()}
+              </div>
+            </div>
+            <button class="btn" onclick="toggleFavorite('${city.name}'); updateFavoritesUI();" style="background: var(--danger); color: #fff;">
+              ❌ 移除
+            </button>
+          </div>
+        `).join('');
+
+        actionsSection.style.display = count >= 2 ? 'block' : 'none';
+      }
+
+      // 更新收藏按钮显示
+      const favBtn = document.getElementById('favoritesBtn');
+      if (favBtn) {
+        favBtn.innerHTML = count > 0 ? `⭐ 收藏 (${count})` : '⭐ 收藏';
+      }
+    }
+
+    window.compareAllFavorites = function() {
+      const favoriteCities = state.favorites.map(name =>
+        cityData.find(c => c.name === name)
+      ).filter(c => c);
+
+      if (favoriteCities.length < 2) {
+        alert('❌ 请至少收藏2个城市');
+        return;
+      }
+
+      // 切换到对比Tab
+      document.querySelector('[data-tab="comparison"]').click();
+
+      // 填充对比城市
+      const selects = document.querySelectorAll('.compare-city-select');
+      favoriteCities.slice(0, 5).forEach((city, index) => {
+        if (selects[index]) {
+          selects[index].value = city.name;
+        } else if (index < 5) {
+          // 如果选择框不够，添加新的
+          window.addCityToCompare();
+          setTimeout(() => {
+            document.querySelectorAll('.compare-city-select')[index].value = city.name;
+          }, 100);
+        }
+      });
+
+      setTimeout(() => {
+        window.updateMultiComparison();
+        closeFavorites();
+      }, 200);
+    };
+
+    // 点击弹窗外部关闭
+    document.getElementById('favoritesModal').addEventListener('click', function(e) {
+      if (e.target === this) closeFavorites();
+    });
+
+    // ========== 分享功能 ==========
+    window.openShareMenu = function() {
+      // 生成分享URL（包含当前筛选状态）
+      const params = new URLSearchParams();
+      params.set('tier', state.currentFilter);
+      params.set('province', state.currentProvince);
+      params.set('minSalary', state.salaryMin);
+      params.set('maxSalary', state.salaryMax);
+      if (state.currentSearch) params.set('search', state.currentSearch);
+
+      const shareURL = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      document.getElementById('shareURL').value = shareURL;
+
+      // 生成二维码
+      generateQRCode(shareURL);
+
+      document.getElementById('shareModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeShareMenu = function() {
+      document.getElementById('shareModal').classList.remove('active');
+      document.body.style.overflow = 'auto';
+    };
+
+    window.copyShareURL = function() {
+      const input = document.getElementById('shareURL');
+      input.select();
+      input.setSelectionRange(0, 99999); // 移动端兼容
+
+      try {
+        document.execCommand('copy');
+        alert('✅ 链接已复制到剪贴板！');
+      } catch (err) {
+        // 使用新API
+        navigator.clipboard.writeText(input.value).then(() => {
+          alert('✅ 链接已复制到剪贴板！');
+        }).catch(() => {
+          alert('❌ 复制失败，请手动复制');
+        });
+      }
+    };
+
+    function generateQRCode(text) {
+      const container = document.getElementById('qrcodeContainer');
+      container.innerHTML = ''; // 清空
+
+      // 使用简单的方法生成二维码：调用在线API
+      const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}`;
+      container.innerHTML = `<img src="${qrURL}" alt="QR Code" style="width: 200px; height: 200px;" />`;
+    }
+
+    window.downloadQRCode = function() {
+      const qrURL = document.querySelector('#qrcodeContainer img').src;
+      const link = document.createElement('a');
+      link.href = qrURL;
+      link.download = `城市工资榜单分享_${new Date().toISOString().split('T')[0]}.png`;
+      link.click();
+    };
+
+    // 点击弹窗外部关闭
+    document.getElementById('shareModal').addEventListener('click', function(e) {
+      if (e.target === this) closeShareMenu();
+    });
+
+    // ========== URL参数解析（支持分享链接） ==========
+    function parseURLParams() {
+      const params = new URLSearchParams(window.location.search);
+
+      if (params.has('tier')) {
+        state.currentFilter = params.get('tier');
+        document.querySelector(`[data-tier="${state.currentFilter}"]`)?.click();
+      }
+
+      if (params.has('province')) {
+        state.currentProvince = params.get('province');
+        const select = document.getElementById('provinceFilter');
+        if (select) select.value = state.currentProvince;
+      }
+
+      if (params.has('minSalary')) {
+        state.salaryMin = parseInt(params.get('minSalary'));
+        const slider = document.getElementById('salaryMinRange');
+        if (slider) slider.value = state.salaryMin;
+      }
+
+      if (params.has('maxSalary')) {
+        state.salaryMax = parseInt(params.get('maxSalary'));
+        const slider = document.getElementById('salaryMaxRange');
+        if (slider) slider.value = state.salaryMax;
+      }
+
+      if (params.has('search')) {
+        state.currentSearch = params.get('search');
+        const input = document.getElementById('searchInput');
+        if (input) input.value = state.currentSearch;
+      }
+
+      // 应用筛选
+      if (params.toString()) {
+        setTimeout(() => window.applyAdvancedFilter?.(), 500);
+      }
+    }
+
+    // ========== 初始化所有第三阶段功能 ==========
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      updateFavoritesUI();
+      parseURLParams();
     });
 
   })();
