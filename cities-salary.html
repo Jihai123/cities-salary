@@ -1028,11 +1028,7 @@
       <div class="tab-content" id="map">
         <div class="chart-container">
           <div class="chart-header">
-            <div class="chart-title">全国工资分布热力图</div>
-            <div class="chart-actions">
-              <button class="filter-btn active" data-map-level="province">省份视图</button>
-              <button class="filter-btn" data-map-level="city">城市视图</button>
-            </div>
+            <div class="chart-title">省份工资排行榜（TOP30）</div>
           </div>
           <div class="chart-body" id="chartMap" style="height: 600px;"></div>
         </div>
@@ -1236,8 +1232,6 @@
 
   <!-- ECharts库 -->
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-  <!-- ECharts中国地图 -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/js/china.js"></script>
 
   <script>
   (function() {
@@ -2389,7 +2383,7 @@
       charts.province.setOption(option, true);
     }
 
-    // ========== 地图热力图 ==========
+    // ========== 地图热力图（改用柱状图展示）==========
     function initMapChart(data = cityData) {
       const chartDom = document.getElementById('chartMap');
       if (!charts.map) {
@@ -2408,95 +2402,113 @@
         provinceStats[province].cities.push(city);
       });
 
-      const mapData = Object.keys(provinceStats).map(p => ({
-        name: p,
-        value: Math.round(provinceStats[p].total / provinceStats[p].count),
-        count: provinceStats[p].count,
-        cities: provinceStats[p].cities
-      }));
+      const provinces = Object.keys(provinceStats)
+        .map(p => ({
+          name: p,
+          value: Math.round(provinceStats[p].total / provinceStats[p].count),
+          count: provinceStats[p].count,
+          cities: provinceStats[p].cities
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 30); // 显示TOP30省份
 
       const option = {
         ...commonOptions,
         tooltip: {
-          trigger: 'item',
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          },
           backgroundColor: 'rgba(15, 23, 42, 0.95)',
           borderColor: '#06b6d4',
           textStyle: {
             color: '#f1f5f9'
           },
           formatter: function(params) {
-            if (params.data) {
-              return `${params.name}<br/>
-                      平均工资: ¥${params.data.value.toLocaleString()}<br/>
-                      城市数量: ${params.data.count}个`;
-            }
-            return params.name;
+            const province = provinces[params[0].dataIndex];
+            const topCities = province.cities.sort((a, b) => b.salary - a.salary).slice(0, 3);
+            const cityList = topCities.map(c => `${c.name}: ¥${(c.salary/10000).toFixed(1)}万`).join('<br/>');
+            return `<strong>${province.name}</strong><br/>
+                    平均工资: ¥${province.value.toLocaleString()}<br/>
+                    城市数量: ${province.count}个<br/>
+                    <br/><strong>TOP3城市:</strong><br/>
+                    ${cityList}`;
           }
         },
-        visualMap: {
-          min: 10000,
-          max: 90000,
-          text: ['高', '低'],
-          realtime: false,
-          calculable: true,
-          inRange: {
-            color: ['#1e293b', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444']
-          },
-          textStyle: {
+        grid: {
+          left: '8%',
+          right: '4%',
+          bottom: '3%',
+          top: '10%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'value',
+          name: '平均年薪（万元）',
+          nameTextStyle: {
             color: '#94a3b8'
           },
-          left: 'left',
-          top: 'bottom'
+          axisLabel: {
+            color: '#94a3b8',
+            formatter: function(value) {
+              return (value / 10000).toFixed(0);
+            }
+          },
+          splitLine: {
+            lineStyle: {
+              color: '#334155',
+              type: 'dashed'
+            }
+          }
+        },
+        yAxis: {
+          type: 'category',
+          data: provinces.map(p => p.name),
+          axisLabel: {
+            color: '#94a3b8'
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#334155'
+            }
+          },
+          inverse: true
         },
         series: [{
           name: '平均工资',
-          type: 'map',
-          map: 'china',
-          roam: true,
+          type: 'bar',
+          data: provinces.map(p => p.value),
           itemStyle: {
-            areaColor: '#1e293b',
-            borderColor: '#334155',
-            borderWidth: 1
+            color: function(params) {
+              const value = params.value;
+              if (value >= 70000) return '#ef4444';
+              if (value >= 60000) return '#f59e0b';
+              if (value >= 50000) return '#10b981';
+              if (value >= 40000) return '#06b6d4';
+              if (value >= 30000) return '#3b82f6';
+              return '#8b5cf6';
+            },
+            borderRadius: [0, 4, 4, 0]
+          },
+          label: {
+            show: true,
+            position: 'right',
+            formatter: function(params) {
+              return (params.value / 10000).toFixed(1) + '万';
+            },
+            color: '#06b6d4',
+            fontSize: 11
           },
           emphasis: {
             itemStyle: {
-              areaColor: '#06b6d4',
-              borderColor: '#fff',
-              borderWidth: 2
-            },
-            label: {
-              show: true,
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 'bold'
+              shadowBlur: 10,
+              shadowColor: 'rgba(6, 182, 212, 0.5)'
             }
-          },
-          select: {
-            itemStyle: {
-              areaColor: '#3b82f6'
-            },
-            label: {
-              show: true,
-              color: '#fff'
-            }
-          },
-          data: mapData
+          }
         }]
       };
 
       charts.map.setOption(option, true);
-
-      // 点击省份显示该省城市详情
-      charts.map.off('click');
-      charts.map.on('click', function(params) {
-        if (params.data && params.data.cities) {
-          const cities = params.data.cities.sort((a, b) => b.salary - a.salary);
-          const cityList = cities.slice(0, 10).map((c, i) =>
-            `${i + 1}. ${c.name}: ¥${(c.salary / 10000).toFixed(1)}万`
-          ).join('\n');
-          alert(`${params.name} TOP10城市:\n\n${cityList}\n\n平均工资: ¥${params.data.value.toLocaleString()}`);
-        }
-      });
     }
 
     // ========== 区域对比图表 ==========
