@@ -3673,226 +3673,6 @@
       }, 600);
     }
 
-    // 等待ECharts加载完成
-    if (typeof echarts !== 'undefined') {
-      init();
-    } else {
-      window.addEventListener('load', init);
-    }
-
-    // ========== 数据说明弹窗控制 ==========
-    window.openDataInfo = function() {
-      document.getElementById('dataInfoModal').classList.add('active');
-      document.body.style.overflow = 'hidden';
-    };
-
-    window.closeDataInfo = function() {
-      document.getElementById('dataInfoModal').classList.remove('active');
-      document.body.style.overflow = 'auto';
-    };
-
-    // 点击弹窗外部关闭
-    document.getElementById('dataInfoModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        window.closeDataInfo();
-      }
-    });
-
-    // ESC键关闭弹窗
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        window.closeDataInfo();
-        window.closeExportMenu();
-      }
-    });
-
-    // ========== 导出菜单控制 ==========
-    window.openExportMenu = function() {
-      // 获取当前筛选的数据数量
-      const filteredData = state.filteredData || cityData;
-      document.getElementById('exportDataCount').textContent = filteredData.length;
-      document.getElementById('exportModal').classList.add('active');
-      document.body.style.overflow = 'hidden';
-    };
-
-    window.closeExportMenu = function() {
-      document.getElementById('exportModal').classList.remove('active');
-      document.body.style.overflow = 'auto';
-    };
-
-    // 点击弹窗外部关闭
-    document.getElementById('exportModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        window.closeExportMenu();
-      }
-    });
-
-    // ========== 导出为CSV ==========
-    window.exportToCSV = function() {
-      const data = state.filteredData || cityData;
-
-      // CSV表头
-      const headers = ['排名', '城市', '省份', '城市等级', '年平均工资(元)'];
-
-      // CSV内容
-      const rows = data.map(city => [
-        city.rank,
-        city.name,
-        city.province,
-        city.tier,
-        city.salary
-      ]);
-
-      // 组合CSV
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.join(','))
-      ].join('\n');
-
-      // 添加BOM以支持中文
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-
-      // 下载
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `城市工资数据_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      window.closeExportMenu();
-      alert(`✅ 成功导出 ${data.length} 条数据到CSV文件！`);
-    };
-
-    // ========== 导出为JSON ==========
-    window.exportToJSON = function() {
-      const data = state.filteredData || cityData;
-
-      const jsonContent = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonContent], { type: 'application/json' });
-
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `城市工资数据_${new Date().toISOString().split('T')[0]}.json`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      window.closeExportMenu();
-      alert(`✅ 成功导出 ${data.length} 条数据到JSON文件！`);
-    };
-
-    // ========== 导出当前图表 ==========
-    window.exportCurrentChart = function() {
-      // 获取当前激活的Tab
-      const activeTab = document.querySelector('.tab-item.active');
-      if (!activeTab) {
-        alert('❌ 未找到激活的Tab');
-        return;
-      }
-
-      const tabName = activeTab.getAttribute('data-tab');
-      let chartInstance = null;
-      let chartName = '';
-
-      // 根据Tab确定要导出的图表
-      switch(tabName) {
-        case 'overview':
-          chartInstance = charts.overview;
-          chartName = '数据总览';
-          break;
-        case 'map':
-          chartInstance = charts.map;
-          chartName = '省份工资排行';
-          break;
-        case 'ranking':
-          chartInstance = charts.ranking;
-          chartName = '城市排行榜';
-          break;
-        case 'comparison':
-          chartInstance = charts.comparison;
-          chartName = '城市对比';
-          break;
-        case 'analysis':
-          chartInstance = charts.distribution;
-          chartName = '工资分布分析';
-          break;
-        default:
-          alert('❌ 该Tab不支持图表导出');
-          return;
-      }
-
-      if (!chartInstance) {
-        alert('❌ 图表未初始化');
-        return;
-      }
-
-      try {
-        // 使用ECharts自带的导出功能
-        const url = chartInstance.getDataURL({
-          type: 'png',
-          pixelRatio: 2,
-          backgroundColor: '#020617'
-        });
-
-        // 下载图片
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
-        link.click();
-
-        window.closeExportMenu();
-        alert(`✅ 成功导出图表：${chartName}`);
-      } catch (error) {
-        alert('❌ 导出失败：' + error.message);
-      }
-    };
-
-    // ========== 切换粒子动画 ==========
-    window.toggleParticles = function() {
-      particlesEnabled = !particlesEnabled;
-      const btn = document.getElementById('particleToggle');
-      const canvas = document.getElementById('particleCanvas');
-
-      if (particlesEnabled) {
-        btn.textContent = '✨ 动画开';
-        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
-        btn.style.color = '#fff';
-        canvas.style.display = 'block';
-        if (!animationId) {
-          animateParticles();
-        }
-      } else {
-        btn.textContent = '🌑 动画关';
-        btn.style.background = 'rgba(30, 41, 59, 0.8)';
-        btn.style.color = 'var(--text-secondary)';
-        canvas.style.display = 'none';
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    };
-
-    // 初始化按钮状态
-    window.addEventListener('load', () => {
-      const btn = document.getElementById('particleToggle');
-      if (!particlesEnabled) {
-        btn.textContent = '🌑 动画关';
-        btn.style.background = 'rgba(30, 41, 59, 0.8)';
-        btn.style.color = 'var(--text-secondary)';
-      } else {
-        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
-        btn.style.color = '#fff';
-      }
-    });
-
     // ========== 主题切换功能 ==========
     // 初始化主题
     function initTheme() {
@@ -4156,6 +3936,227 @@
         setTimeout(() => window.applyAdvancedFilter?.(), 500);
       }
     }
+
+
+    // 等待ECharts加载完成
+    if (typeof echarts !== 'undefined') {
+      init();
+    } else {
+      window.addEventListener('load', init);
+    }
+
+    // ========== 数据说明弹窗控制 ==========
+    window.openDataInfo = function() {
+      document.getElementById('dataInfoModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeDataInfo = function() {
+      document.getElementById('dataInfoModal').classList.remove('active');
+      document.body.style.overflow = 'auto';
+    };
+
+    // 点击弹窗外部关闭
+    document.getElementById('dataInfoModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        window.closeDataInfo();
+      }
+    });
+
+    // ESC键关闭弹窗
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        window.closeDataInfo();
+        window.closeExportMenu();
+      }
+    });
+
+    // ========== 导出菜单控制 ==========
+    window.openExportMenu = function() {
+      // 获取当前筛选的数据数量
+      const filteredData = state.filteredData || cityData;
+      document.getElementById('exportDataCount').textContent = filteredData.length;
+      document.getElementById('exportModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeExportMenu = function() {
+      document.getElementById('exportModal').classList.remove('active');
+      document.body.style.overflow = 'auto';
+    };
+
+    // 点击弹窗外部关闭
+    document.getElementById('exportModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        window.closeExportMenu();
+      }
+    });
+
+    // ========== 导出为CSV ==========
+    window.exportToCSV = function() {
+      const data = state.filteredData || cityData;
+
+      // CSV表头
+      const headers = ['排名', '城市', '省份', '城市等级', '年平均工资(元)'];
+
+      // CSV内容
+      const rows = data.map(city => [
+        city.rank,
+        city.name,
+        city.province,
+        city.tier,
+        city.salary
+      ]);
+
+      // 组合CSV
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      // 添加BOM以支持中文
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+      // 下载
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `城市工资数据_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.closeExportMenu();
+      alert(`✅ 成功导出 ${data.length} 条数据到CSV文件！`);
+    };
+
+    // ========== 导出为JSON ==========
+    window.exportToJSON = function() {
+      const data = state.filteredData || cityData;
+
+      const jsonContent = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `城市工资数据_${new Date().toISOString().split('T')[0]}.json`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.closeExportMenu();
+      alert(`✅ 成功导出 ${data.length} 条数据到JSON文件！`);
+    };
+
+    // ========== 导出当前图表 ==========
+    window.exportCurrentChart = function() {
+      // 获取当前激活的Tab
+      const activeTab = document.querySelector('.tab-item.active');
+      if (!activeTab) {
+        alert('❌ 未找到激活的Tab');
+        return;
+      }
+
+      const tabName = activeTab.getAttribute('data-tab');
+      let chartInstance = null;
+      let chartName = '';
+
+      // 根据Tab确定要导出的图表
+      switch(tabName) {
+        case 'overview':
+          chartInstance = charts.overview;
+          chartName = '数据总览';
+          break;
+        case 'map':
+          chartInstance = charts.map;
+          chartName = '省份工资排行';
+          break;
+        case 'ranking':
+          chartInstance = charts.ranking;
+          chartName = '城市排行榜';
+          break;
+        case 'comparison':
+          chartInstance = charts.comparison;
+          chartName = '城市对比';
+          break;
+        case 'analysis':
+          chartInstance = charts.distribution;
+          chartName = '工资分布分析';
+          break;
+        default:
+          alert('❌ 该Tab不支持图表导出');
+          return;
+      }
+
+      if (!chartInstance) {
+        alert('❌ 图表未初始化');
+        return;
+      }
+
+      try {
+        // 使用ECharts自带的导出功能
+        const url = chartInstance.getDataURL({
+          type: 'png',
+          pixelRatio: 2,
+          backgroundColor: '#020617'
+        });
+
+        // 下载图片
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
+        link.click();
+
+        window.closeExportMenu();
+        alert(`✅ 成功导出图表：${chartName}`);
+      } catch (error) {
+        alert('❌ 导出失败：' + error.message);
+      }
+    };
+
+    // ========== 切换粒子动画 ==========
+    window.toggleParticles = function() {
+      particlesEnabled = !particlesEnabled;
+      const btn = document.getElementById('particleToggle');
+      const canvas = document.getElementById('particleCanvas');
+
+      if (particlesEnabled) {
+        btn.textContent = '✨ 动画开';
+        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
+        btn.style.color = '#fff';
+        canvas.style.display = 'block';
+        if (!animationId) {
+          animateParticles();
+        }
+      } else {
+        btn.textContent = '🌑 动画关';
+        btn.style.background = 'rgba(30, 41, 59, 0.8)';
+        btn.style.color = 'var(--text-secondary)';
+        canvas.style.display = 'none';
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    // 初始化按钮状态
+    window.addEventListener('load', () => {
+      const btn = document.getElementById('particleToggle');
+      if (!particlesEnabled) {
+        btn.textContent = '🌑 动画关';
+        btn.style.background = 'rgba(30, 41, 59, 0.8)';
+        btn.style.color = 'var(--text-secondary)';
+      } else {
+        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
+        btn.style.color = '#fff';
+      }
+    });
 
     // ========== 初始化所有第三阶段功能 ==========
     window.addEventListener('DOMContentLoaded', () => {
